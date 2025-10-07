@@ -21,6 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+
+#include "target_ver.h"
 #include "uart_shell.h"
 
 /* USER CODE END Includes */
@@ -58,6 +61,20 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+int _write(int file, char *ptr, int len) {
+    uart_shell_send((uint8_t *)ptr, len);
+    return len;
+}
+
+static void print_startup_message(void) {
+  printf("*********** BOOT ***********\r\n");
+  printf("Project: %s\r\n", PROJECT_DESCRIPTION);
+  printf("Version: %d.%d.%s\r\n", TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
+  printf("Author: %s\r\n", AUTHOR);
+  printf("****************************\r\n");
+}
+
 static void heartbeat_handler(void) {
     static uint32_t heartbeat_timeout = HEARTBEAT_TIMEOUT_MS;
 
@@ -65,6 +82,10 @@ static void heartbeat_handler(void) {
 		HAL_GPIO_TogglePin(HEARTBEAT_LED_GPIO_Port, HEARTBEAT_LED_Pin);
 		heartbeat_timeout = HAL_GetTick() + HEARTBEAT_TIMEOUT_MS;
 	}
+}
+
+void uart_shell_rx_callback(uint8_t *data, uint16_t length) {
+    printf("Recived: %.*s", length, data);
 }
 
 /* USER CODE END 0 */
@@ -99,8 +120,9 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  uart_shell_init(&huart1, uart_shell_rx_callback);
 
-    uart_shell_init(NULL);
+  print_startup_message();
 
   /* USER CODE END 2 */
 
