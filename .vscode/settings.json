@@ -1,7 +1,10 @@
 {
     "C_Cpp.intelliSenseEngine": "default",
-    "editor.formatOnSave": true,
     "editor.trimAutoWhitespace": true,
     "files.trimTrailingWhitespace": true,
-    "clang-format.style": "{ BasedOnStyle: LLVM, IndentWidth: 4, BreakBeforeBraces: Attach }"
+    "files.associations": {
+        "*.dsl": "c4",
+        "stdbool.h": "c",
+        "main.h": "c"
+    },
 }

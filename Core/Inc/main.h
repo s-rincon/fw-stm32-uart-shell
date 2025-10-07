@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define HEARTBEAT_LED_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
+#define UART_SHELL_INSTANCE USART1
+
 
 /* USER CODE END Private defines */
 
