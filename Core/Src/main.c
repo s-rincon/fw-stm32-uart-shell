@@ -100,7 +100,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-    uart_shell_init(NULL);
+  uart_shell_init(NULL);
 
   /* USER CODE END 2 */
 

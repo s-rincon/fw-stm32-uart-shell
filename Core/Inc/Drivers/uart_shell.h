@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define UART_SHELL_MAX_RX_BUFFER 256
+#define UART_SHELL_MAX_TX_BUFFER 256
+
 /**
  * @brief Callback type for UART shell RX events.
  *
@@ -22,7 +25,7 @@ typedef void (*uart_shell_rx_callback_t)(uint8_t *data, uint16_t length);
  *
  * @param rx_callback Callback function for received data.
  */
-void uart_shell_init(uart_shell_rx_callback_t rx_callback);
+void uart_shell_init(UART_HandleTypeDef *huart, uart_shell_rx_callback_t rx_callback);
 
 /**
  * @brief Reconfigures the UART shell baud rate.
