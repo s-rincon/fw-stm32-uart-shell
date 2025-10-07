@@ -1,0 +1,7 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "editor.formatOnSave": true,
+    "editor.trimAutoWhitespace": true,
+    "files.trimTrailingWhitespace": true,
+    "clang-format.style": "{ BasedOnStyle: LLVM, IndentWidth: 4, BreakBeforeBraces: Attach }"
+}
