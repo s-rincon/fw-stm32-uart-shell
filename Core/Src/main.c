@@ -67,6 +67,14 @@ int _write(int file, char *ptr, int len) {
     return len;
 }
 
+static void print_startup_message(void) {
+  printf("*********** BOOT ***********\r\n");
+  printf("Project: %s\r\n", PROJECT_DESCRIPTION);
+  printf("Version: %d.%d.%s\r\n", TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
+  printf("Author: %s\r\n", AUTHOR);
+  printf("****************************\r\n");
+}
+
 static void heartbeat_handler(void) {
     static uint32_t heartbeat_timeout = HEARTBEAT_TIMEOUT_MS;
 
@@ -76,12 +84,8 @@ static void heartbeat_handler(void) {
 	}
 }
 
-static void print_startup_message(void) {
-  printf("*********** BOOT ***********\r\n");
-  printf("Project: %s\r\n", PROJECT_DESCRIPTION);
-  printf("Version: %d.%d.%s\r\n", TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
-  printf("Author: %s\r\n", AUTHOR);
-  printf("****************************\r\n");
+void uart_shell_rx_callback(uint8_t *data, uint16_t length) {
+    printf("Recived: %.*s", length, data);
 }
 
 /* USER CODE END 0 */
@@ -116,7 +120,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  uart_shell_init(&huart1, NULL);
+  uart_shell_init(&huart1, uart_shell_rx_callback);
 
   print_startup_message();
 
