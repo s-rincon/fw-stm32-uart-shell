@@ -1,26 +1,46 @@
+/**
+ * @file uart_shell.c
+ * @brief UART shell driver implementation for STM32.
+ *
+ * Handles UART RX/TX using ring buffers and provides packet-based reception with timeout.
+ *
+ * @author Santiago Rincon
+ * @date 2025
+ */
+
 #include "uart_shell.h"
 #include "ring_buffer.h"
 
+#define UART_SHELL_RX_TIMEOUT_MS 20
+
+/**
+ * @brief UART shell context structure.
+ */
 typedef struct uart_shell_ {
-    UART_HandleTypeDef *huart;
-
-    ring_buffer_t ring_buffer_rx;
-    ring_buffer_t ring_buffer_tx;
-
-    uint8_t tx_buffer[UART_SHELL_MAX_TX_BUFFER];
-    uint8_t rx_buffer[UART_SHELL_MAX_RX_BUFFER];
-
-    uint8_t rx_byte;
-    bool rx_packet_ready;
-
-    uart_shell_rx_callback_t rx_callback;
-
+    UART_HandleTypeDef *huart;                /**< Pointer to UART handle */
+    ring_buffer_t ring_buffer_rx;             /**< RX ring buffer */
+    ring_buffer_t ring_buffer_tx;             /**< TX ring buffer */
+    uint8_t tx_buffer[UART_SHELL_MAX_TX_BUFFER]; /**< TX buffer memory */
+    uint8_t rx_buffer[UART_SHELL_MAX_RX_BUFFER]; /**< RX buffer memory */
+    uint8_t rx_byte;                          /**< Last received byte */
+    bool rx_packet_ready;                     /**< Packet ready flag */
+    uart_shell_rx_callback_t rx_callback;     /**< RX callback function */
 } uart_shell_t;
 
 uart_shell_t uart_shell;
 
+/**
+ * @brief HAL UART RX complete callback.
+ *
+ * Called by HAL when a byte is received. Stores the byte in the RX ring buffer,
+ * sets the packet ready flag if newline is received, and restarts reception.
+ *
+ * @param huart Pointer to UART handle.
+ */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance != uart_shell.huart->Instance) return;
+    if (huart->Instance != uart_shell.huart->Instance) {
+		return;
+	}
 
     ring_buffer_push(&uart_shell.ring_buffer_rx, uart_shell.rx_byte);
 
@@ -31,8 +51,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     HAL_UART_Receive_IT(uart_shell.huart, &uart_shell.rx_byte, 1);
 }
 
+/**
+ * @brief HAL UART TX complete callback.
+ *
+ * Called by HAL when a byte is transmitted. Sends next byte from TX ring buffer if available.
+ *
+ * @param huart Pointer to UART handle.
+ */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance != uart_shell.huart->Instance) return;
+    if (huart->Instance != uart_shell.huart->Instance) {
+		return;
+	}
 
     uint8_t data_char;
     if (ring_buffer_pop(&uart_shell.ring_buffer_tx, &data_char)) {
@@ -41,7 +70,9 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void uart_shell_send(const uint8_t *data, uint16_t length) {
-    if (!data || length == 0) return;
+    if ((!data) || (length == 0)) {
+		return;
+	}
 
     for (uint16_t i = 0; i < length; i++) {
         ring_buffer_push(&uart_shell.ring_buffer_tx, data[i]);
@@ -56,7 +87,25 @@ void uart_shell_send(const uint8_t *data, uint16_t length) {
 }
 
 void uart_shell_reconfigure(uint32_t baud_rate) {
-    // Implement UART reconfiguration here
+    while(uart_shell.ring_buffer_tx.count > 0);
+
+    __disable_irq();
+
+    if(HAL_UART_DeInit(uart_shell.huart) != HAL_OK) {
+        __enable_irq();
+        return;
+    }
+
+    uart_shell.huart->Init.BaudRate = baud_rate;
+
+    if(HAL_UART_Init(uart_shell.huart) != HAL_OK) {
+        __enable_irq();
+        return;
+    }
+
+    HAL_UART_Receive_IT(uart_shell.huart, &uart_shell.rx_byte, 1);
+
+    __enable_irq();
 }
 
 void uart_shell_poll(void) {
