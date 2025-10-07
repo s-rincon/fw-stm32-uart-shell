@@ -1,0 +1,17 @@
+# === Build artifacts ===
+Debug/
+out/
+obj/
+*.o
+*.a
+*.elf
+*.map
+*.lst
+*.hex
+*.bin
+*.d
+*.dep
+*.log
+
+# === VSCode ===
+.settings/
