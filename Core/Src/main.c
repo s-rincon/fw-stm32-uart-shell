@@ -76,7 +76,7 @@ static void print_startup_message(void) {
 }
 
 static void heartbeat_handler(void) {
-    static uint32_t heartbeat_timeout = HEARTBEAT_TIMEOUT_MS;
+  static uint32_t heartbeat_timeout = HEARTBEAT_TIMEOUT_MS;
 
 	if (HAL_GetTick() > heartbeat_timeout) {
 		HAL_GPIO_TogglePin(HEARTBEAT_LED_GPIO_Port, HEARTBEAT_LED_Pin);
@@ -85,7 +85,7 @@ static void heartbeat_handler(void) {
 }
 
 void uart_shell_rx_callback(uint8_t *data, uint16_t length) {
-    printf("Recived: %.*s", length, data);
+    printf("Received: %.*s", length, data);
 }
 
 /* USER CODE END 0 */

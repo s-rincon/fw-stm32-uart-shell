@@ -31,6 +31,8 @@ typedef void (*uart_shell_rx_callback_t)(uint8_t *data, uint16_t length);
 /**
  * @brief Initializes the UART shell driver.
  *
+ * Sets up UART, ring buffers, and starts reception.
+ *
  * @param huart Pointer to UART handle.
  * @param rx_callback RX packet callback function.
  */
@@ -39,21 +41,28 @@ void uart_shell_init(UART_HandleTypeDef *huart, uart_shell_rx_callback_t rx_call
 /**
  * @brief Reconfigures the UART shell baud rate.
  *
+ * Aborts ongoing transfers, deinitializes and reinitializes UART with new baud rate.
+ *
  * @param baud_rate New baud rate.
+ * @return true if successful, false otherwise.
  */
-void uart_shell_reconfigure(uint32_t baud_rate);
+bool uart_shell_reconfigure(uint32_t baud_rate);
 
 /**
  * @brief Sends data over the UART shell.
  *
+ * Pushes data into TX ring buffer and starts transmission if not busy.
+ *
  * @param data Pointer to data buffer.
  * @param length Number of bytes to send.
+ * @return Number of bytes accepted for transmission.
  */
-void uart_shell_send(const uint8_t *data, uint16_t length);
+size_t uart_shell_send(const uint8_t *data, size_t length);
 
 /**
- * @brief Polls for received packets and handles timeout.
+ * @brief Polls for received packets and calls RX callback.
  *
+ * Accumulates bytes until a packet delimiter (\r\n) is found, then calls RX callback.
  * Should be called periodically in main loop.
  */
 void uart_shell_poll(void);

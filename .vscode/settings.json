@@ -5,6 +5,7 @@
     "files.associations": {
         "*.dsl": "c4",
         "stdbool.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "ring_buffer.h": "c"
     },
 }
