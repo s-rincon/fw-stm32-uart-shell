@@ -11,7 +11,13 @@
 #include "uart_shell.h"
 #include "ring_buffer.h"
 
-#define UART_RECONFIG_TIMEOUT_MS 200U
+/**
+ * @brief Timeout (in milliseconds) for UART receive operations.
+ *
+ * This defines the maximum time allowed to wait for incoming UART data before
+ * considering the reception as timed out.
+ */
+#define UART_RX_TIMEOUT_MS       100U
 
 /**
  * @brief UART shell context structure.
@@ -106,12 +112,21 @@ size_t uart_shell_send(const uint8_t *data, size_t length) {
 
 void uart_shell_poll(void) {
     static uint8_t packet[UART_SHELL_MAX_RX_BUFFER];
-    static uint16_t packet_len = 0;
+    static size_t packet_len = 0;
+    static uint32_t last_rx_tick = 0;
+    uint8_t byte;
 
-    while (ring_buffer_pop(&uart_shell.ring_buffer_rx, &packet[packet_len])) {
-        packet_len++;
+    if ((packet_len > 0U) && ((HAL_GetTick() - last_rx_tick) > UART_RX_TIMEOUT_MS)) {
+        /* Rx timeout occurred — reset packet */
+        packet_len = 0U;
+    }
 
-        if (packet_len >= UART_SHELL_MAX_RX_BUFFER) {
+    while (ring_buffer_pop(&uart_shell.ring_buffer_rx, &byte)) {
+        last_rx_tick = HAL_GetTick();
+
+        if (packet_len < UART_SHELL_MAX_RX_BUFFER) {
+            packet[packet_len++] = byte;
+        } else {
             packet_len = 0U;
             continue;
         }
