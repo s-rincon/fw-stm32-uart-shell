@@ -1,4 +1,5 @@
 #include "ring_buffer.h"
+#include <stddef.h>
 
 bool ring_buffer_init(ring_buffer_t *rb, uint8_t *buf, uint16_t size) {
     if ((rb == NULL) || (buf == NULL) || (size == 0)) {

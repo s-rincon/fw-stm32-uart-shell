@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "uart_shell.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -213,5 +214,35 @@ void USART1_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+/**
+ * @brief HAL UART RX complete callback.
+ *
+ * Called by HAL when a byte is received. Stores the byte in the RX ring buffer,
+ * and restarts reception for the next byte.
+ *
+ * @param huart Pointer to UART handle.
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+        extern uart_shell_t uart_shell; // Assuming uart_shell is defined elsewhere
+        uart_shell_rx_it_callback(&uart_shell);
+  }
+}
+
+/**
+ * @brief HAL UART TX complete callback.
+ *
+ * Called by HAL when a byte is transmitted. Sends next byte from TX ring buffer if available,
+ * otherwise marks TX as not busy.
+ *
+ * @param huart Pointer to UART handle.
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+        extern uart_shell_t uart_shell; // Assuming uart_shell is defined elsewhere
+        uart_shell_tx_it_callback(&uart_shell);
+  }
+
+}
 
 /* USER CODE END 1 */
