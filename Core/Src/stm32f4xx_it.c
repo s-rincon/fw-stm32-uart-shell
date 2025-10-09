@@ -23,10 +23,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart_driver.h"
+#include "shell.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
+
 
 /* USER CODE END TD */
 
@@ -42,6 +44,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+
+extern shell_t shell;
 
 /* USER CODE END PV */
 
@@ -224,8 +228,7 @@ void USART1_IRQHandler(void)
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART1) {
-        extern uart_driver_t shell_uart_driver; // Assuming uart_shell is defined elsewhere
-        uart_driver_rx_it_callback(&shell_uart_driver);
+    uart_driver_rx_it_callback(shell_get_driver_instance(&shell));
   }
 }
 
@@ -239,10 +242,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
  */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART1) {
-        extern uart_driver_t shell_uart_driver; // Assuming uart_shell is defined elsewhere
-        uart_driver_tx_it_callback(&shell_uart_driver);
+	  uart_driver_tx_it_callback(shell_get_driver_instance(&shell));
   }
-
 }
 
 /* USER CODE END 1 */
