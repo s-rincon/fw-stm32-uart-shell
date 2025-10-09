@@ -22,7 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "uart_shell.h"
+#include "uart_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -224,8 +224,8 @@ void USART1_IRQHandler(void)
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART1) {
-        extern uart_shell_t uart_shell; // Assuming uart_shell is defined elsewhere
-        uart_shell_rx_it_callback(&uart_shell);
+        extern uart_driver_t shell_uart_driver; // Assuming uart_shell is defined elsewhere
+        uart_driver_rx_it_callback(&shell_uart_driver);
   }
 }
 
@@ -239,8 +239,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
  */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART1) {
-        extern uart_shell_t uart_shell; // Assuming uart_shell is defined elsewhere
-        uart_shell_tx_it_callback(&uart_shell);
+        extern uart_driver_t shell_uart_driver; // Assuming uart_shell is defined elsewhere
+        uart_driver_tx_it_callback(&shell_uart_driver);
   }
 
 }

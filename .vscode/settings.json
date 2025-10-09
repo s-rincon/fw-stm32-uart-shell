@@ -6,6 +6,7 @@
         "*.dsl": "c4",
         "stdbool.h": "c",
         "main.h": "c",
-        "ring_buffer.h": "c"
+        "ring_buffer.h": "c",
+        "target_ver.h": "c"
     },
 }
