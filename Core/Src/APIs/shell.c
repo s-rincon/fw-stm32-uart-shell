@@ -17,9 +17,7 @@
 #include <stdbool.h>
 
 #include "target_ver.h"
-
-#define NEWLINE_SEQ   "\r\n"      /**< Newline sequence for terminal output */
-#define PROMPT_STRING "STM32 > "  /**< Shell prompt string */
+#include "cli_parser.h"
 
 /**
  * @brief Prints the startup banner with project information.
@@ -231,27 +229,7 @@ static void shell_process_command(shell_t *shell, uint8_t *command, uint16_t len
 
     shell_printf(shell, NEWLINE_SEQ);
 
-    // Built-in command processing
-    if (strcmp((char *)command, "help") == 0) {
-        shell_printf(shell, "Available commands:" NEWLINE_SEQ);
-        shell_printf(shell, "  help    - Show this help" NEWLINE_SEQ);
-        shell_printf(shell, "  clear   - Clear screen" NEWLINE_SEQ);
-        shell_printf(shell, "  history - Show command history" NEWLINE_SEQ);
-        shell_printf(shell, "  version - Show version info" NEWLINE_SEQ);
-    } else if (strcmp((char *)command, "clear") == 0) {
-        shell_printf(shell, "\033[2J\033[H"); // Clear screen and move cursor to home
-    } else if (strcmp((char *)command, "history") == 0) {
-        shell_printf(shell, "Command history:" NEWLINE_SEQ);
-        for (size_t history_entry_idx = 0; history_entry_idx < shell->history.count; history_entry_idx++) {
-            size_t history_array_index = ((shell->history.current_index - shell->history.count + history_entry_idx) + SHELL_HISTORY_SIZE) % SHELL_HISTORY_SIZE;
-            shell_printf(shell, "  %zu: %s" NEWLINE_SEQ, (history_entry_idx + 1), shell->history.commands[history_array_index]);
-        }
-    } else if (strcmp((char *)command, "version") == 0) {
-        shell_printf(shell, "Version: %d.%d.%s" NEWLINE_SEQ, TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
-    } else {
-        shell_printf(shell, "Unknown command: %s" NEWLINE_SEQ, command);
-        shell_printf(shell, "Type 'help' for available commands." NEWLINE_SEQ);
-    }
+    cli_parser_execute(shell, (char *) command);
 
     shell_send_prompt(shell);
 }
