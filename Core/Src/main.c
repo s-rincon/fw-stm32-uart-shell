@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "shell.h"
+#include "uart_driver.h"
 
 /* USER CODE END Includes */
 
@@ -64,7 +65,7 @@ static void MX_USART1_UART_Init(void);
 shell_t shell;
 
 int _write(int file, char *ptr, int len) {
-  return shell_send_bytes(&shell, (uint8_t *) ptr, len);
+  return uart_driver_send(shell_get_driver_instance(&shell), (uint8_t *)ptr, (size_t)len);
 }
 
 static void heartbeat_handler(void) {

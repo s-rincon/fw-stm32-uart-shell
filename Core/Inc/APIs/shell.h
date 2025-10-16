@@ -101,6 +101,23 @@ bool shell_init(shell_t *shell, UART_HandleTypeDef *huart);
 void shell_printf(shell_t *shell, const char *format, ...);
 
 /**
+ * @brief Clears the terminal screen using ANSI escape codes.
+ *
+ * Sends the appropriate escape sequence to clear the terminal and move the cursor to the home position.
+ * @param shell Pointer to the shell instance.
+ */
+void shell_clear_screen(shell_t *shell);
+
+/**
+ * @brief Prints the command history to the terminal.
+ *
+ * Displays all commands stored in the shell's history buffer.
+ * If no commands are present, prints a message indicating the history is empty.
+ * @param shell Pointer to the shell instance.
+ */
+void shell_print_history(shell_t *shell);
+
+/**
  * @brief Sends raw bytes through the shell's UART interface.
  * @param shell Pointer to the shell instance.
  * @param data Pointer to the data to send.

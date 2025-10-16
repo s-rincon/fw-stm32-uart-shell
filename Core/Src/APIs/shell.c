@@ -470,6 +470,29 @@ void shell_printf(shell_t *shell, const char *format, ...) {
     }
 }
 
+void shell_clear_screen(shell_t *shell) {
+    if (shell == NULL) {
+        return;
+    }
+    shell_printf(shell, "\033[2J\033[H");
+}
+
+void shell_print_history(shell_t *shell) {
+    if (shell == NULL) {
+        return;
+    }
+
+    if (shell->history.count == 0) {
+        shell_printf(shell, "No commands in history." NEWLINE_SEQ);
+    }
+
+    shell_printf(shell, "Command history:" NEWLINE_SEQ);
+    for (size_t i = 0; i < shell->history.count; i++) {
+        size_t idx = ((shell->history.current_index - shell->history.count + i) + SHELL_HISTORY_SIZE) % SHELL_HISTORY_SIZE;
+        shell_printf(shell, "  %u: %s" NEWLINE_SEQ, (unsigned)(i + 1), shell->history.commands[idx]);
+    }
+}
+
 bool shell_init(shell_t *shell, UART_HandleTypeDef *huart) {
     if ((shell == NULL) || (huart == NULL)) {
         return false;
