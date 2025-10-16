@@ -7,6 +7,10 @@
         "stdbool.h": "c",
         "main.h": "c",
         "ring_buffer.h": "c",
-        "target_ver.h": "c"
+        "target_ver.h": "c",
+        "stdio.h": "c",
+        "uart_driver.h": "c",
+        "string.h": "c",
+        "shell.h": "c"
     },
 }
