@@ -17,6 +17,7 @@
 #include "main.h"
 #include "uart_driver.h"
 
+#define TAB_SEQ       "\t"        /**< Tab character for terminal output */
 #define NEWLINE_SEQ   "\r\n"      /**< Newline sequence for terminal output */
 #define PROMPT_STRING "STM32 > "  /**< Shell prompt string */
 
@@ -25,7 +26,7 @@
  * @brief Maximum length of the input command line (including null terminator).
  */
 #ifndef SHELL_MAX_LENGTH
-#define SHELL_MAX_LENGTH 128
+#define SHELL_MAX_LENGTH 256
 #endif
 
 /**

@@ -1,6 +1,13 @@
 /**
  * @file cli_parser.h
- * @brief Command parser for STM32 UART shell.
+ * @brief Command parser implementation for STM32 UART shell.
+ *
+ * This file implements the CLI command parsing and dispatch logic,
+ * including help, clear, history, and version commands.
+ * Each command handler validates its arguments and prints usage/help as needed.
+ *
+ * @author Santiago Rincon
+ * @date 2025
  */
 
 #ifndef __CLI_PARSER_INC_
