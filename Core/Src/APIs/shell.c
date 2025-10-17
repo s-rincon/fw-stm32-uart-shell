@@ -105,6 +105,12 @@ static void handle_cursor_up(shell_t *shell);
 static void handle_cursor_down(shell_t *shell);
 
 /**
+ * @brief Handles the TAB key for auto-completion.
+ * @param shell Pointer to the shell instance.
+ */
+static void handle_tab_completion(shell_t *shell);
+
+/**
  * @brief Main shell processing loop.
  * Reads UART input and processes shell logic.
  * @param shell Pointer to the shell instance.
@@ -134,10 +140,10 @@ static void shell_print_startup_message(shell_t *shell) {
     }
 
     shell_printf(shell, "****************************\r\n");
-    shell_printf(shell, "Project: %s\r\n", PROJECT_DESCRIPTION);
-    shell_printf(shell, "Version: %d.%d.%s\r\n", TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
-    shell_printf(shell, "Author: %s\r\n", AUTHOR);
-    shell_printf(shell, "****************************\r\n");
+    shell_printf(shell, "Project: %s" NEWLINE_SEQ, PROJECT_DESCRIPTION);
+    shell_printf(shell, "Version: %d.%d.%s" NEWLINE_SEQ, TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
+    shell_printf(shell, "Author: %s" NEWLINE_SEQ, AUTHOR);
+    shell_printf(shell, "****************************" NEWLINE_SEQ NEWLINE_SEQ);
 }
 
 static void shell_send_prompt(shell_t *shell) {
@@ -208,9 +214,15 @@ static void shell_redraw_line(shell_t *shell) {
 }
 
 static void shell_process_command(shell_t *shell, uint8_t *command, uint16_t length) {
-    if ((shell == NULL) || (command == NULL) || (length == 0)) {
+    if ((shell == NULL) || (command == NULL)) {
         return;
     }
+
+    if (length == 0) {
+		shell_printf(shell, NEWLINE_SEQ);
+		shell_send_prompt(shell);
+		return;
+	}
 
     // Trim whitespace and newlines
     while ((length > 0) && ((command[length - 1] == '\r') || (command[length - 1] == '\n') || (command[length - 1] == ' '))) {
@@ -218,18 +230,12 @@ static void shell_process_command(shell_t *shell, uint8_t *command, uint16_t len
         length--;
     }
 
-    if (length == 0) {
-        shell_printf(shell, NEWLINE_SEQ);
-        shell_send_prompt(shell);
-        return;
-    }
-
-    // Add to history
-    shell_add_to_history(shell, (char *)command);
 
     shell_printf(shell, NEWLINE_SEQ);
 
     cli_parser_execute(shell, (char *) command);
+
+    shell_add_to_history(shell, (char *)command);
 
     shell_send_prompt(shell);
 }
@@ -280,9 +286,9 @@ static void handle_carriage_return(shell_t *shell) {
     shell_process_command(shell, shell->rx.buffer, shell->rx.length);
 
     // Reset input state
-    shell->rx.length = 0;
-    shell->rx.cursor_pos = 0;
     shell->history.browse_index = shell->history.current_index;
+    shell->rx.cursor_pos = 0;
+    shell->rx.length = 0;
 }
 
 static void handle_backspace(shell_t *shell) {
@@ -387,6 +393,51 @@ static void handle_cursor_down(shell_t *shell) {
     }
 }
 
+static void handle_tab_completion(shell_t *shell) {
+    if (shell == NULL) {
+        return;
+    }
+
+    // Null terminate current input
+    shell->rx.buffer[shell->rx.length] = '\0';
+
+
+    // Create completion buffer for CLI parser
+    char completion_buffer[SHELL_MAX_LENGTH];
+    memset(completion_buffer, 0, sizeof(completion_buffer));
+    strncpy(completion_buffer, (char *)shell->rx.buffer, shell->rx.length);
+
+    tab_completion_result_t result = cli_parser_handle_tab_completion(shell, (char *) shell->rx.buffer, completion_buffer, SHELL_MAX_LENGTH);
+
+    if (result == TAB_COMPLETION_SINGLE_MATCH) {
+        shell_clear_line(shell);
+
+        shell->rx.length = strlen(completion_buffer);
+        shell->rx.cursor_pos = shell->rx.length;
+        strncpy((char *)shell->rx.buffer, completion_buffer, shell->rx.length);
+
+        // Add space after completion
+        if (shell->rx.length < (SHELL_MAX_LENGTH - 1)) {
+            shell->rx.buffer[shell->rx.length] = ' ';
+            shell->rx.length++;
+            shell->rx.cursor_pos++;
+            shell->rx.buffer[shell->rx.length] = '\0';
+        }
+
+        shell_redraw_line(shell);
+
+    } else if (result == TAB_COMPLETION_HELP_SHOWN) {
+        // Help shown + completion set (command + space already in buffer)
+        shell_send_prompt(shell);
+        shell_redraw_line(shell);
+
+    } else if (result == TAB_COMPLETION_MULTIPLE_MATCHES) {
+        // Multiple matches - CLI parser already printed options
+        shell_send_prompt(shell);
+        shell_redraw_line(shell);
+    }
+}
+
 void shell_task(shell_t *shell) {
     if (shell == NULL) return;
 
@@ -417,6 +468,8 @@ void shell_task(shell_t *shell) {
                     handle_carriage_return(shell);
                 } else if ((received_byte == 127) || (received_byte == 8)) {
                     handle_backspace(shell);
+                } else if (received_byte == '\t') {
+                    handle_tab_completion(shell);
                 } else if ((received_byte >= 32) && (received_byte <= 126)) {
                     handle_printable_character(shell, received_byte);
                 }
@@ -491,6 +544,7 @@ void shell_print_history(shell_t *shell) {
         size_t idx = ((shell->history.current_index - shell->history.count + i) + SHELL_HISTORY_SIZE) % SHELL_HISTORY_SIZE;
         shell_printf(shell, "  %u: %s" NEWLINE_SEQ, (unsigned)(i + 1), shell->history.commands[idx]);
     }
+    shell_printf(shell, NEWLINE_SEQ);
 }
 
 bool shell_init(shell_t *shell, UART_HandleTypeDef *huart) {
