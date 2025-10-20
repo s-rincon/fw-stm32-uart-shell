@@ -98,3 +98,24 @@ void led_driver_task(led_driver_t *led) {
         led->next_toggle_time = led_driver_get_tick() + led->blink_period_ms;
     }
 }
+
+bool led_driver_get_state(const led_driver_t *led) {
+    if ((led == NULL) || (!led->initialized)) {
+        return false;
+    }
+    return led->current_state;
+}
+
+bool led_driver_is_blinking(const led_driver_t *led) {
+    if ((led == NULL) || (!led->initialized)) {
+        return false;
+    }
+    return led->is_blinking;
+}
+
+uint32_t led_driver_get_blink_period(const led_driver_t *led) {
+    if ((led == NULL) || (!led->initialized)) {
+        return 0U;
+    }
+    return led->blink_period_ms;
+}

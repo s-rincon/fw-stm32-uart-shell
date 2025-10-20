@@ -80,4 +80,25 @@ void led_driver_blink(led_driver_t *led, uint32_t period_ms);
  */
 void led_driver_task(led_driver_t *led);
 
+/**
+ * @brief Get current LED state.
+ * @param led Pointer to LED driver instance.
+ * @return true if LED is on, false if off.
+ */
+bool led_driver_get_state(const led_driver_t *led);
+
+/**
+ * @brief Check if LED is currently blinking.
+ * @param led Pointer to LED driver instance.
+ * @return true if blinking, false otherwise.
+ */
+bool led_driver_is_blinking(const led_driver_t *led);
+
+/**
+ * @brief Get current blink period.
+ * @param led Pointer to LED driver instance.
+ * @return Blink period in milliseconds.
+ */
+uint32_t led_driver_get_blink_period(const led_driver_t *led);
+
 #endif /* __LED_DRIVER_INC_ */
