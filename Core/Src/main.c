@@ -25,6 +25,7 @@
 
 #include "shell.h"
 #include "uart_driver.h"
+#include "led_driver.h"
 
 /* USER CODE END Includes */
 
@@ -64,17 +65,11 @@ static void MX_USART1_UART_Init(void);
 
 shell_t shell;
 
+led_driver_t user_led;
+led_driver_t heartbeat_led;
+
 int _write(int file, char *ptr, int len) {
   return uart_driver_send(shell_get_driver_instance(&shell), (uint8_t *)ptr, (size_t)len);
-}
-
-static void heartbeat_handler(void) {
-  static uint32_t heartbeat_timeout = HEARTBEAT_TIMEOUT_MS;
-
-	if (HAL_GetTick() > heartbeat_timeout) {
-		HAL_GPIO_TogglePin(HEARTBEAT_LED_GPIO_Port, HEARTBEAT_LED_Pin);
-		heartbeat_timeout = HAL_GetTick() + HEARTBEAT_TIMEOUT_MS;
-	}
 }
 
 /* USER CODE END 0 */
@@ -110,14 +105,18 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   shell_init(&shell, &huart1);
+  led_driver_init(&user_led, USER_LED_GPIO_Port, USER_LED_Pin);
+  led_driver_init(&heartbeat_led, HEARTBEAT_LED_GPIO_Port, HEARTBEAT_LED_Pin);
+  led_driver_blink(&heartbeat_led, HEARTBEAT_TIMEOUT_MS);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
     while (1) {
-    	heartbeat_handler();
       shell_task(&shell);
+      led_driver_task(&user_led);
+      led_driver_task(&heartbeat_led);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
