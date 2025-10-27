@@ -26,7 +26,7 @@
  * @brief Maximum length of the input command line (including null terminator).
  */
 #ifndef SHELL_MAX_LENGTH
-#define SHELL_MAX_LENGTH 256
+#define SHELL_MAX_LENGTH 512
 #endif
 
 /**

@@ -13,8 +13,10 @@
 #include "cli_parser.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "target_ver.h"
 #include "shell.h"
+#include "led_driver.h"
 
 #define TOTAL_COMMANDS          (4U)    /**< Total number of available commands */
 #define COMMAND_MAX_LENGTH      (10U)   /**< Maximum length of command name */
@@ -27,10 +29,11 @@
 // --- Help text constants ---
 static const char help_general_text[] =
     "Available commands:" NEWLINE_SEQ
-    TAB_SEQ "help    - Show this help" NEWLINE_SEQ
-    TAB_SEQ "clear   - Clear screen" NEWLINE_SEQ
-    TAB_SEQ "history - Show command history" NEWLINE_SEQ
-    TAB_SEQ "version - Show version info" NEWLINE_SEQ
+    TAB_SEQ "help" NEWLINE_SEQ
+    TAB_SEQ "clear" NEWLINE_SEQ
+    TAB_SEQ "history" NEWLINE_SEQ
+    TAB_SEQ "version" NEWLINE_SEQ
+    TAB_SEQ "led" NEWLINE_SEQ
     "Type 'help <command>' for details on a specific command." NEWLINE_SEQ NEWLINE_SEQ;
 
 static const char help_clear_text[] =
@@ -44,6 +47,16 @@ static const char help_history_text[] =
 static const char help_version_text[] =
     "version: Shows firmware version information." NEWLINE_SEQ
     TAB_SEQ "Usage: version (no params)" NEWLINE_SEQ NEWLINE_SEQ;
+
+static const char help_led_text[] =
+    "led: LED control commands." NEWLINE_SEQ
+    TAB_SEQ "Usage: led <command> [parameters]" NEWLINE_SEQ
+    TAB_SEQ "Commands:" NEWLINE_SEQ
+    TAB_SEQ TAB_SEQ "on        - Turn LED on" NEWLINE_SEQ
+    TAB_SEQ TAB_SEQ "off       - Turn LED off" NEWLINE_SEQ
+    TAB_SEQ TAB_SEQ "toggle    - Toggle LED state" NEWLINE_SEQ
+    TAB_SEQ TAB_SEQ "blink <ms> - Blink LED, period in milliseconds" NEWLINE_SEQ
+    TAB_SEQ TAB_SEQ "get_state - Show current LED state" NEWLINE_SEQ NEWLINE_SEQ;
 
 // --- Command handler prototypes ---
 /**
@@ -78,8 +91,16 @@ static void cli_cmd_history(shell_t *shell, int argc, char **argv);
  */
 static void cli_cmd_version(shell_t *shell, int argc, char **argv);
 
+/**
+ * @brief Handle the 'led' command.
+ * @param shell Pointer to the shell instance.
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ */
+static void cli_cmd_led(shell_t *shell, int argc, char **argv);
+
 // --- Available commands list ---
-static const char *available_commands[] = {"help", "clear", "history", "version"};
+static const char *available_commands[] = {"help", "clear", "history", "version", "led"};
 static const size_t num_available_commands = sizeof(available_commands) / sizeof(available_commands[0]);
 
 
@@ -118,9 +139,11 @@ void cli_parser_execute(void *shell_parent, char *command_line) {
         cli_cmd_history(shell, argc, argv);
     } else if (strcmp(argv[0], "version") == 0) {
         cli_cmd_version(shell, argc, argv);
+    } else if (strcmp(argv[0], "led") == 0) {
+        cli_cmd_led(shell, argc, argv);
     } else {
         shell_printf(shell, "Unknown command or argument: %s" NEWLINE_SEQ, argv[0]);
-        shell_printf(shell, "Type 'help' for available commands." NEWLINE_SEQ NEWLINE_SEQ);
+        shell_printf(shell, "Type 'help' for available commands." NEWLINE_SEQ);
     }
 }
 
@@ -140,7 +163,8 @@ static void cli_cmd_help(shell_t *shell, int argc, char **argv) {
         } else if (strcmp(cmd, "version") == 0) {
             shell_printf(shell, help_version_text);
         } else if (strcmp(cmd, "help") == 0) {
-            // Ignore on purpose
+        } else if (strcmp(cmd, "led") == 0) {
+            shell_printf(shell, help_led_text);
         } else {
             shell_printf(shell, "help: " UNKNOWN_ARGUMENT_SEQ, cmd);
         }
@@ -193,6 +217,85 @@ static void cli_cmd_version(shell_t *shell, int argc, char **argv) {
         return;
     }
     shell_printf(shell, "Version: %d.%d.%s" NEWLINE_SEQ NEWLINE_SEQ, TARGET_VER_MAJOR, TARGET_VER_MINOR, TARGET_VER_DATE);
+}
+
+static void cli_cmd_led(shell_t *shell, int argc, char **argv) {
+    extern led_driver_t user_led; // Reference to LED from main.c
+
+    if (argc == 1) {
+        shell_printf(shell, "led: missing subcommand" NEWLINE_SEQ);
+        shell_printf(shell, help_led_text);
+        return;
+    }
+
+    if (argc == 2 && strcmp(argv[1], "help") == 0) {
+        shell_printf(shell, help_led_text);
+        return;
+    }
+
+    const char *subcmd = argv[1];
+
+    if (strcmp(subcmd, "on") == 0) {
+        if (argc > 2) {
+            shell_printf(shell, "led on: " TOO_MANY_ARGUMENTS_TEXT NEWLINE_SEQ);
+            return;
+        }
+        led_driver_turn_on(&user_led);
+        shell_printf(shell, "LED turned on" NEWLINE_SEQ);
+
+    } else if (strcmp(subcmd, "off") == 0) {
+        if (argc > 2) {
+            shell_printf(shell, "led off: " TOO_MANY_ARGUMENTS_TEXT NEWLINE_SEQ);
+            return;
+        }
+        led_driver_turn_off(&user_led);
+        shell_printf(shell, "LED turned off" NEWLINE_SEQ);
+
+    } else if (strcmp(subcmd, "toggle") == 0) {
+        if (argc > 2) {
+            shell_printf(shell, "led toggle: " TOO_MANY_ARGUMENTS_TEXT NEWLINE_SEQ);
+            return;
+        }
+        led_driver_toggle(&user_led);
+        shell_printf(shell, "LED toggled" NEWLINE_SEQ);
+
+    } else if (strcmp(subcmd, "blink") == 0) {
+        if (argc != 3) {
+            shell_printf(shell, "led blink: requires period in milliseconds" NEWLINE_SEQ);
+            shell_printf(shell, "Usage: led blink <ms>" NEWLINE_SEQ);
+            return;
+        }
+
+        // Parse period argument
+        char *endptr;
+        long period_ms = strtol(argv[2], &endptr, 10);
+
+        if (*endptr != '\0' || period_ms <= 0 || period_ms > 10000) {
+            shell_printf(shell, "led blink: invalid period (1-10000 ms)" NEWLINE_SEQ);
+            return;
+        }
+
+        led_driver_blink(&user_led, (uint32_t)period_ms);
+        shell_printf(shell, "LED blinking with %ld ms period" NEWLINE_SEQ, period_ms);
+
+    } else if (strcmp(subcmd, "get_state") == 0) {
+        if (argc > 2) {
+            shell_printf(shell, "led get_state: " TOO_MANY_ARGUMENTS_TEXT NEWLINE_SEQ);
+            return;
+        }
+
+        if (user_led.is_blinking) {
+            shell_printf(shell, "LED is blinking (period: %lu ms)" NEWLINE_SEQ,
+                        (unsigned long)user_led.blink_period_ms);
+        } else {
+            shell_printf(shell, "LED is %s" NEWLINE_SEQ,
+                        user_led.current_state ? "ON" : "OFF");
+        }
+
+    } else {
+        shell_printf(shell, "led: unknown subcommand '%s'" NEWLINE_SEQ, subcmd);
+        shell_printf(shell, "Type 'led help' for usage information." NEWLINE_SEQ);
+    }
 }
 
 size_t cli_parser_get_commands(const char ***commands) {
