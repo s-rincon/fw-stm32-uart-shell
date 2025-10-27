@@ -7,9 +7,10 @@ A robust, feature-rich UART shell for STM32 microcontrollers with line editing, 
 - **Interactive Line Editing**: Insert, delete, and navigate through command lines
 - **Command History**: Navigate through previously entered commands with arrow keys
 - **Tab Auto-Completion**: Complete commands and show help with TAB key
-- **Built-in Commands**: help, clear, history, version
+- **Built-in Commands**: help, clear, history, version, led
+- **LED Control**: On/off/toggle/blink with state query via `led` command
 - **Modular Design**: Easy to extend with new commands
-- **Register-Based UART**: Direct register access for optimal performance
+- **HAL-based UART Driver**: Interrupt-driven TX/RX with ring buffers
 - **VT100 Compatible**: Works with PuTTY, minicom, and other terminal emulators
 
 ## Binary Files
@@ -41,10 +42,35 @@ Available commands:
 Type 'help <command>' for details on a specific command.
 
 STM32 > version
-Version: 1.0.20251017
+Version: 1.1.20251027
 
 STM32 > clear
 [clears screen]
+```
+
+### LED Commands
+
+Control the user LED from the shell:
+
+```
+STM32 > led help
+led: LED control commands.
+    Usage: led <command> [parameters]
+    Commands:
+        on        - Turn LED on
+        off       - Turn LED off
+        toggle    - Toggle LED state
+        blink <ms> - Blink LED, period in milliseconds
+        get_state - Show current LED state
+
+STM32 > led on
+LED turned on
+
+STM32 > led blink 200
+LED blinking with 200 ms period
+
+STM32 > led get_state
+LED is blinking (period: 200 ms)
 ```
 
 ### Auto-Completion
@@ -74,15 +100,19 @@ fw-stm32-uart-shell/
 ├── bin/                    # Pre-compiled binaries
 ├── Core/
 │   ├── Inc/
-│   │   └── APIs/
-│   │       ├── shell.h     # Shell interface
-│   │       ├── cli_parser.h # Command parser interface
-│   │       └── uart_driver.h # UART driver interface
+│   │   ├── APIs/
+│   │   │   ├── shell.h       # Shell interface
+│   │   │   └── cli_parser.h  # Command parser interface
+│   │   └── Drivers/
+│   │       ├── uart_driver.h # UART driver interface
+│   │       └── led_driver.h  # LED driver interface
 │   └── Src/
-│       └── APIs/
-│           ├── shell.c     # Shell implementation
-│           ├── cli_parser.c # Command parser
-│           └── uart_driver.c # Register-based UART driver
+│       ├── APIs/
+│       │   ├── shell.c       # Shell implementation
+│       │   └── cli_parser.c  # Command parser
+│       └── Drivers/
+│           ├── uart_driver.c # HAL-based UART driver with ring buffers
+│           └── led_driver.c  # LED driver implementation
 ├── doc/                    # Documentation
 └── CHANGELOG.md           # Version history
 ```
@@ -108,7 +138,7 @@ Default configuration (modify in `shell.h`):
 ### Buffer Sizes
 
 ```c
-#define SHELL_MAX_LENGTH 128    // Command line length
+#define SHELL_MAX_LENGTH 512    // Command line length (including null)
 #define SHELL_HISTORY_SIZE 10   // Number of history entries
 ```
 
@@ -136,7 +166,7 @@ static void cli_cmd_status(shell_t *shell, int argc, char **argv) {
 
 ## License
 
-This project is provided as-is for educational and development purposes.
+This project is provided as-is for educational and development purposes. See LICENSE for details.
 
 ## Author
 
@@ -144,6 +174,6 @@ Santiago Rincon - 2025
 
 ## Version
 
-Current Release: **v1.0.20251017**
+Current Release: **v1.1.20251027**
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.

@@ -2,6 +2,23 @@
 
 All notable changes to the STM32 UART Shell project will be documented in this file.
 
+## [1.1.20251027] - 2025-10-27
+
+### Added
+- LED driver module (`led_driver.c/.h`) with on/off/toggle/blink support
+- Heartbeat LED on `HEARTBEAT_LED_Pin` blinking every 500 ms (configured in `main.c`)
+- User LED instance (`user_led`) integrated into main loop
+- New `led` CLI command with subcommands:
+	- `led on` — turn the user LED on
+	- `led off` — turn the user LED off
+	- `led toggle` — toggle the user LED
+	- `led blink <ms>` — start blinking with a period in milliseconds (1–10000)
+	- `led get_state` — display current LED state or blinking status
+
+### Changed
+- CLI help and TAB auto-completion updated to include the `led` command
+- Shell main loop calls `led_driver_task()` to service blinking
+
 ## [1.0.20251017] - 2025-01-17
 
 ### Added
