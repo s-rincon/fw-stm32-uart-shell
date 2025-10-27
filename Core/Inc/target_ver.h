@@ -2,8 +2,8 @@
 #define __TARGET_VER_H_
 
 #define TARGET_VER_MAJOR    1
-#define TARGET_VER_MINOR    0
-#define TARGET_VER_DATE     "20251017"
+#define TARGET_VER_MINOR    1
+#define TARGET_VER_DATE     "20251027"
 
 #define AUTHOR              "Santiago Rincon"
 

@@ -232,11 +232,8 @@ static void shell_process_command(shell_t *shell, uint8_t *command, uint16_t len
 
 
     shell_printf(shell, NEWLINE_SEQ);
-
-    cli_parser_execute(shell, (char *) command);
-
     shell_add_to_history(shell, (char *)command);
-
+    cli_parser_execute(shell, (char *) command);
     shell_send_prompt(shell);
 }
 
